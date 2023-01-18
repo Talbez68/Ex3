@@ -28,7 +28,7 @@ def prepareMsg(num):
             enc_password = password.encode()
 
             # Create a Sym key from salt and password
-            kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32,salt=salt,iterations=10000,backend=default_backend())
+            kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32,salt=salt,iterations=100000,backend=default_backend())
             secret_key = base64.urlsafe_b64encode(kdf.derive(enc_password))
             f_key = Fernet(secret_key)
 
@@ -70,7 +70,7 @@ def clientSocket():
             data = client_socket.recv(1024).decode()
             print('\nReceived from server: ' + data)
             client_socket.close()
-            
+
         time.sleep(60)
     
             
