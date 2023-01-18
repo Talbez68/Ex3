@@ -1,4 +1,4 @@
-
+import time
 import base64
 import socket
 from cryptography.hazmat.backends import default_backend
@@ -7,6 +7,7 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives.serialization import load_pem_public_key
 from cryptography.fernet import Fernet
 
+round_dict ={}
 
 def prepareMsg(num):
     """
@@ -14,6 +15,8 @@ def prepareMsg(num):
     :param: num 
     :return: 
     """
+    global round_dict
+    
     # Read the message and parse it from file
     with open("messages{}.txt".format(num),"r") as msg_file:
         for line in msg_file:
@@ -43,17 +46,33 @@ def prepareMsg(num):
             #         public_key = load_pem_public_key(key_data)
 
             final_msg = dest_ip+dest_port+str(enc_msg)
-            clientSocket(final_msg)
+
+            # Add final message to the round dictionary to be sent later on 
+            round_dict.setdefault(round,[]).append(final_msg)
 
 
-def clientSocket(enc_msg):
-    client_socket = socket.socket()  # instantiate
-    client_socket.connect(('127.0.0.1', 9000))  # connect to the server
-    print("Sending: "+str(enc_msg))
-    client_socket.send(enc_msg.encode())  # send message
-    data = client_socket.recv(1024).decode()
-    print('\nReceived from server: ' + data)
-    client_socket.close()
+
+def clientSocket():
+
+    message_list = []
+
+    # Iterate all the rounds needed from the global dictionary
+    for round_num in round_dict:
+        print("Round "+round_num)
+        for message in round_dict[round_num]:
+            print(message)
+            
+            # Open a socket to the target
+            client_socket = socket.socket() 
+            client_socket.connect(('127.0.0.1', 9000))  # connect to the server
+            print("Sending: "+str(message))
+            client_socket.send(message.encode())  # send message
+            data = client_socket.recv(1024).decode()
+            print('\nReceived from server: ' + data)
+            client_socket.close()
+            
+        time.sleep(60)
+    
             
 
 
@@ -61,6 +80,7 @@ def main():
    # msg_num = input("Enter Messeage Number: ")
     msg_num=1
     prepareMsg(msg_num)
+    clientSocket()
 
 
 if __name__ == "__main__":
